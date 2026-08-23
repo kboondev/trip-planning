@@ -44,3 +44,11 @@ after cloning:
 mkdir -p ~/.claude/agents/tripPlanWorkflow
 cp .claude/agents/tripPlanWorkflow/*.md ~/.claude/agents/tripPlanWorkflow/
 ```
+
+## Context Usage (Sample)
+
+![context-usage-sample](image.png)
+
+## Report Sample 
+
+![report-sample](image-1.png)
