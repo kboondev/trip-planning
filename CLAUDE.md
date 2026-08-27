@@ -10,13 +10,14 @@ Claude Code subagents, plus a storage convention for the trips they produce.
 
 ## Architecture
 
-Four project-scoped subagents live in `.claude/agents/tripPlanWorkflow/` and
-together form the workflow:
+Five project-scoped subagents live in `.claude/agents/tripPlanWorkflow/`;
+four of them form the per-trip workflow, and a fifth runs out-of-band:
 
 - `trip-planner-manager` (Jarvis) — the customer's single point of contact.
   Before interviewing the customer, checks `memory/` for standing
   preferences and past trips, and confirms anything relevant with the
-  customer rather than assuming it still applies. Gathers requirements
+  customer rather than assuming it still applies (heuristics excepted —
+  see Customer memory). Gathers requirements
   (locations, dates, budget, style_tags, travelers), delegates to the
   three associates below, reviews their output against a required-fields
   contract, resolves conflicts between them, and compiles one cohesive
@@ -82,10 +83,13 @@ across trips — separate from any per-trip data in `trips/`:
   customer confirmation, since they're process lessons rather than
   customer-specific facts.
 
-Only Jarvis reads or writes `memory/`. Monday, Fiona, and Friday never
-see it directly — Jarvis folds anything relevant into the `style_tags`/
-`budget` fields it already passes downstream, so the associates keep
-working from one consistent, filtered brief. Jarvis always confirms
+Jarvis is the only agent that writes `memory/`. Besides Jarvis, the
+only other agent that reads it is the read-only
+`trip-planner-consolidator` (see Self-growing loop below); Monday,
+Fiona, and Friday never see it directly — Jarvis folds anything
+relevant into the `style_tags`/`budget` fields it already passes
+downstream, so the associates keep working from one consistent,
+filtered brief. Jarvis always confirms
 memory-derived facts with the customer rather than applying them
 silently (with the exception of heuristics in `memory/heuristics.md`,
 which are applied without confirmation), and treats a missing or empty

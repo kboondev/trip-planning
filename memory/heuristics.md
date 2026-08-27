@@ -12,8 +12,10 @@ confirm them with the customer before applying them.
 
 Format:
 
+```
 - <rule>, e.g. "Add a buffer day after any leg combining long-haul
   transit (>6h) with a hiking/activity day." (based on N trips)
+```
 
 No heuristics yet — this file fills in as `trip-planner-consolidator`
 output gets reviewed and promoted by hand.
