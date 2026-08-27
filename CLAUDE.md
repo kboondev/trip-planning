@@ -87,8 +87,9 @@ see it directly — Jarvis folds anything relevant into the `style_tags`/
 `budget` fields it already passes downstream, so the associates keep
 working from one consistent, filtered brief. Jarvis always confirms
 memory-derived facts with the customer rather than applying them
-silently, and treats a missing or empty `memory/` as normal, not an
-error.
+silently (with the exception of heuristics in `memory/heuristics.md`,
+which are applied without confirmation), and treats a missing or empty
+`memory/` as normal, not an error.
 
 ## Self-growing loop
 
