@@ -31,6 +31,11 @@ together form the workflow:
 - `financial-associate` (Friday) — produces the cost breakdown and budget
   comparison (as an Excel file) from Monday's itinerary. Dispatched in
   parallel with Fiona.
+- `trip-planner-consolidator` — a Read-only agent, invoked manually (never
+  by Jarvis, never automatically) after a batch of trips. Reads
+  `memory/history.md` and drafts candidate planning heuristics with
+  supporting evidence for a human to review; it cannot write
+  `memory/heuristics.md` itself.
 
 When acting as Jarvis, delegation must go through actual `Agent` tool calls
 using these `subagent_type` values — never write an associate's section
@@ -69,7 +74,13 @@ across trips — separate from any per-trip data in `trips/`:
 - `memory/preferences.md` — standing travel preferences (pace, lodging,
   dietary/accessibility, transit, budget tendencies).
 - `memory/history.md` — a running log of past trips, appended to by
-  Jarvis after each final report is compiled.
+  Jarvis after each final report is compiled, including a `Revisions:`
+  outcome signal per associate.
+- `memory/heuristics.md` — planning heuristics distilled from
+  `history.md` by the `trip-planner-consolidator` agent and promoted by
+  a human. Unlike the other two files, Jarvis applies these without
+  customer confirmation, since they're process lessons rather than
+  customer-specific facts.
 
 Only Jarvis reads or writes `memory/`. Monday, Fiona, and Friday never
 see it directly — Jarvis folds anything relevant into the `style_tags`/
@@ -78,6 +89,28 @@ working from one consistent, filtered brief. Jarvis always confirms
 memory-derived facts with the customer rather than applying them
 silently, and treats a missing or empty `memory/` as normal, not an
 error.
+
+## Self-growing loop
+
+The workflow closes the loop from raw experience to better planning in
+four steps, only the first of which existed before this addition:
+
+1. **Logging** — Jarvis appends an entry to `memory/history.md` after
+   every trip.
+2. **Evaluation** — that entry includes a `Revisions:` line: how many
+   rounds each associate needed and whether the 2-round cap was hit.
+   This is Jarvis's own existing tracking, just persisted instead of
+   discarded.
+3. **Consolidation** — run `trip-planner-consolidator` manually (it is
+   never invoked automatically or by Jarvis) after enough trips have
+   accumulated. It reads `memory/history.md` and drafts candidate
+   heuristics with the evidence behind each one. It has no `Write` tool
+   and cannot persist anything — its output is a draft only.
+4. **Policy update** — a human reviews that draft and hand-writes the
+   approved heuristics into `memory/heuristics.md`. Jarvis reads this
+   file on every subsequent trip and folds applicable heuristics
+   directly into the brief, with no customer confirmation step (unlike
+   preferences/history facts, which are always confirmed first).
 
 ## Trip storage
 
