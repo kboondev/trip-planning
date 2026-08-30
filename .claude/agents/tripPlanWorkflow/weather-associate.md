@@ -44,6 +44,7 @@ You must return, per leg: expected conditions (temp range, precipitation, wind, 
   - United Kingdom → Met Office (https://metoffice.gov.uk/)
   - Australia → Bureau of Meteorology (https://bom.gov.au/)
   - Germany → Deutscher Wetterdienst (https://dwd.de/)
-  - Hong Kong → Hong Kong Observatory (https://hko.gov.hk/)
+  - Hong Kong → Hong Kong Observatory (https://visithk.weather.gov.hk/index_e.htm)
+  - Malaysia -> Malaysian Meteorological Department (https://www.met.gov.my/en/)
 - If the destination has no well-known national source, or the trip spans many countries in one lookup pass, fall back to a reputable global provider (e.g., OpenWeatherMap, AccuWeather, Weather.com).
 - Always record which source was used for each leg — this feeds the `source_type` label required in the CONTRACT section (forecast vs. seasonal norm), and lets Jarvis trace a number back to where it came from if the customer asks.

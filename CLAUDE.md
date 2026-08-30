@@ -22,8 +22,8 @@ four of them form the per-trip workflow, and a fifth runs out-of-band:
   three associates below, reviews their output against a required-fields
   contract, resolves conflicts between them, and compiles one cohesive
   final report. Never builds routes, checks weather, or does cost math
-  itself. After compiling the final report, appends a short entry to
-  `memory/history.md`.
+  itself. After compiling the final report, creates a new page under
+  `memory/history/`.
 - `trip-planner-associate` (Monday) — builds the day-by-day route/itinerary
   from Jarvis's brief.
 - `weather-associate` (Fiona) — produces a per-leg weather report (forecast
@@ -34,9 +34,9 @@ four of them form the per-trip workflow, and a fifth runs out-of-band:
   parallel with Fiona.
 - `trip-planner-consolidator` — a Read-only agent, invoked manually (never
   by Jarvis, never automatically) after a batch of trips. Reads
-  `memory/history.md` and drafts candidate planning heuristics with
+  `memory/history/` and drafts candidate planning heuristics with
   supporting evidence for a human to review; it cannot write
-  `memory/heuristics.md` itself.
+  `memory/heuristics/` itself.
 
 When acting as Jarvis, delegation must go through actual `Agent` tool calls
 using these `subagent_type` values — never write an associate's section
@@ -70,51 +70,69 @@ forwarding it, if it's missing any required field above.
 ## Customer memory
 
 `memory/` at the repo root holds standing customer context that persists
-across trips — separate from any per-trip data in `trips/`:
+across trips — separate from any per-trip data in `trips/`. It's
+structured as a small wiki, not a pile of flat logs, so it stays cheap to
+read as trips accumulate:
 
+- `memory/INDEX.md` — the entry point. One line per page in `history/`
+  and `heuristics/`, each carrying its `destination`/`tags` so a reader
+  can tell which pages are relevant to the trip at hand without opening
+  all of them. Always read this before anything else under `memory/`.
 - `memory/preferences.md` — standing travel preferences (pace, lodging,
-  dietary/accessibility, transit, budget tendencies).
-- `memory/history.md` — a running log of past trips, appended to by
-  Jarvis after each final report is compiled, including a `Revisions:`
-  outcome signal per associate.
-- `memory/heuristics.md` — planning heuristics distilled from
-  `history.md` by the `trip-planner-consolidator` agent and promoted by
-  a human. Unlike the other two files, Jarvis applies these without
-  customer confirmation, since they're process lessons rather than
-  customer-specific facts.
+  dietary/accessibility, transit, budget tendencies). One file, always
+  read in full — it's small and always relevant.
+- `memory/history/` — one page per past trip (`<year>-<month>-<slug>.md`),
+  appended to by Jarvis after each final report is compiled. Each page's
+  frontmatter carries `destination`, `style_tags`, and a `revisions`
+  outcome signal per associate; see `memory/history/README.md` for the
+  exact format.
+- `memory/heuristics/` — one page per planning heuristic, distilled from
+  `history/` by the `trip-planner-consolidator` agent and promoted by a
+  human. Unlike the other two, Jarvis applies these without customer
+  confirmation, since they're process lessons rather than
+  customer-specific facts. See `memory/heuristics/README.md` for the
+  exact format.
 
-Jarvis is the only agent that writes `memory/`. Besides Jarvis, the
-only other agent that reads it is the read-only
-`trip-planner-consolidator` (see Self-growing loop below); Monday,
-Fiona, and Friday never see it directly — Jarvis folds anything
-relevant into the `style_tags`/`budget` fields it already passes
-downstream, so the associates keep working from one consistent,
-filtered brief. Jarvis always confirms
+Every page under `history/` and `heuristics/` carries YAML frontmatter
+(`type`, plus `destination`/`tags`/`style_tags` as applicable) — that's
+the schema `INDEX.md` filtering depends on. Free-text content below the
+frontmatter is unstructured prose, same as before.
+
+Jarvis is the only agent that writes `memory/`: it creates new pages
+under `history/` and updates `INDEX.md`'s History section, but never
+touches `heuristics/` or `preferences.md`. Besides Jarvis, the only
+other agent that reads it is the read-only `trip-planner-consolidator`
+(see Self-growing loop below); Monday, Fiona, and Friday never see it
+directly — Jarvis folds anything relevant into the `style_tags`/`budget`
+fields it already passes downstream, so the associates keep working
+from one consistent, filtered brief. Jarvis always confirms
 memory-derived facts with the customer rather than applying them
-silently (with the exception of heuristics in `memory/heuristics.md`,
-which are applied without confirmation), and treats a missing or empty
-`memory/` as normal, not an error.
+silently (with the exception of heuristics, which are applied without
+confirmation), and treats a missing or empty `memory/` as normal, not an
+error.
 
 ## Self-growing loop
 
 The workflow closes the loop from raw experience to better planning in
 four steps, only the first of which existed before this addition:
 
-1. **Logging** — Jarvis appends an entry to `memory/history.md` after
-   every trip.
-2. **Evaluation** — that entry includes a `Revisions:` line: how many
-   rounds each associate needed and whether the 2-round cap was hit.
-   This is Jarvis's own existing tracking, just persisted instead of
+1. **Logging** — Jarvis creates a page under `memory/history/` after
+   every trip and adds a one-line entry to `memory/INDEX.md`.
+2. **Evaluation** — that page's frontmatter includes a `revisions` field:
+   how many rounds each associate needed and whether the 2-round cap was
+   hit. This is Jarvis's own existing tracking, just persisted instead of
    discarded.
 3. **Consolidation** — run `trip-planner-consolidator` manually (it is
    never invoked automatically or by Jarvis) after enough trips have
-   accumulated. It reads `memory/history.md` and drafts candidate
-   heuristics with the evidence behind each one. It has no `Write` tool
-   and cannot persist anything — its output is a draft only.
+   accumulated. It reads `memory/INDEX.md` and every page under
+   `memory/history/` and drafts candidate heuristic pages with the
+   evidence behind each one. It has no `Write` tool and cannot persist
+   anything — its output is a draft only.
 4. **Policy update** — a human reviews that draft and hand-writes the
-   approved heuristics into `memory/heuristics.md`. Jarvis reads this
-   file on every subsequent trip and folds applicable heuristics
-   directly into the brief, with no customer confirmation step (unlike
+   approved heuristics as new pages under `memory/heuristics/`, adding an
+   entry to `memory/INDEX.md` for each. Jarvis discovers these via the
+   index on every subsequent trip and folds applicable ones directly into
+   the brief, with no customer confirmation step (unlike
    preferences/history facts, which are always confirmed first).
 
 ## Trip storage

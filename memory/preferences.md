@@ -1,3 +1,7 @@
+---
+type: preferences
+---
+
 # Travel Preferences
 
 Standing preferences for the customer, kept across trips. Jarvis (the
